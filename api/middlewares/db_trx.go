@@ -2,10 +2,9 @@ package middlewares
 
 import (
 	"net/http"
-
-	"github.com/dipeshdulal/clean-gin/constants"
-	"github.com/dipeshdulal/clean-gin/lib"
 	"github.com/gin-gonic/gin"
+	"github.com/fadhlinw/clean-gin/constants"
+	"github.com/fadhlinw/clean-gin/lib"
 )
 
 // DatabaseTrx middleware for transactions support for database

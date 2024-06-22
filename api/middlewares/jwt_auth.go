@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dipeshdulal/clean-gin/domains"
-	"github.com/dipeshdulal/clean-gin/lib"
+	"github.com/fadhlinw/clean-gin/constants"
+	"github.com/fadhlinw/clean-gin/domains"
+	"github.com/fadhlinw/clean-gin/lib"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,21 +37,17 @@ func (m JWTAuthMiddleware) Handler() gin.HandlerFunc {
 		t := strings.Split(authHeader, " ")
 		if len(t) == 2 {
 			authToken := t[1]
-			authorized, err := m.service.Authorize(authToken)
-			if authorized {
+			authorized, err := m.service.Authorize(authToken, constants.TypeAuthToken)
+			if authorized != nil {
+				c.Request.Header.Set("user_id", authorized.UserID)
 				c.Next()
 				return
 			}
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err.Error(),
-			})
+
 			m.logger.Error(err)
-			c.Abort()
+			abortErrorResponse(c, err.Error(), http.StatusUnauthorized)
 			return
 		}
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "you are not authorized",
-		})
-		c.Abort()
+		abortErrorResponse(c, "invalid token", http.StatusUnauthorized)
 	}
 }

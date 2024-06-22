@@ -5,22 +5,22 @@ import (
 	"gorm.io/gorm"
 )
 
-// UserRepository database structure
-type UserRepository struct {
+// TokenStoreRepository
+type TokenStoreRepository struct {
 	lib.Database
 	logger lib.Logger
 }
 
-// NewUserRepository creates a new user repository
-func NewUserRepository(db lib.Database, logger lib.Logger) UserRepository {
-	return UserRepository{
+// NewTokenStoreRepository creates a new token store repository
+func NewTokenStoreRepository(db lib.Database, logger lib.Logger) TokenStoreRepository {
+	return TokenStoreRepository{
 		Database: db,
 		logger:   logger,
 	}
 }
 
 // WithTrx enables repository with transaction
-func (r UserRepository) WithTrx(trxHandle *gorm.DB) UserRepository {
+func (r TokenStoreRepository) WithTrx(trxHandle *gorm.DB) TokenStoreRepository {
 	if trxHandle == nil {
 		r.logger.Error("Transaction Database not found in gin context. ")
 		return r

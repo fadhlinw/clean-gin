@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"github.com/dipeshdulal/clean-gin/commands"
+	"github.com/fadhlinw/clean-gin/commands"
 	"github.com/spf13/cobra"
 )
 

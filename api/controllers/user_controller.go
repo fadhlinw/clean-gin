@@ -4,10 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dipeshdulal/clean-gin/constants"
-	"github.com/dipeshdulal/clean-gin/domains"
-	"github.com/dipeshdulal/clean-gin/lib"
-	"github.com/dipeshdulal/clean-gin/models"
+	"github.com/fadhlinw/clean-gin/constants"
+	"github.com/fadhlinw/clean-gin/domains"
+	"github.com/fadhlinw/clean-gin/dto"
+	"github.com/fadhlinw/clean-gin/lib"
+	"github.com/fadhlinw/clean-gin/utils"
+	"github.com/fadhlinw/clean-gin/validation"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -38,58 +40,138 @@ func (u UserController) GetOneUser(c *gin.Context) {
 		})
 		return
 	}
-	user, err := u.service.GetOneUser(uint(id))
-
+	user, err := u.service.GetOneUser(id)
 	if err != nil {
 		u.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		globalResponse(
+			c,
+			http.StatusBadRequest,
+			validation.ParseFieldErrors(err, dto.UserResponseDto{}),
+			nil,
+			"Bad request",
+		)
 		return
 	}
-
-	c.JSON(200, gin.H{
-		"data": user,
-	})
+	globalResponse(
+		c,
+		http.StatusOK,
+		nil,
+		user,
+		"Success",
+	)
 
 }
 
 // GetUser gets the user
 func (u UserController) GetUser(c *gin.Context) {
-	users, err := u.service.GetAllUser()
+
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "0"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	sort := c.DefaultQuery("sort", "created_at,desc")
+	searchQuery := c.DefaultQuery("q", "")
+	pagination := utils.Pagination{
+		Page:  page + 1,
+		Limit: limit,
+		Sort:  utils.ReplaceComaWithSpace(sort),
+	}
+
+	users, err := u.service.GetAllUser(searchQuery, pagination)
 	if err != nil {
 		u.logger.Error(err)
+		globalResponse(
+			c,
+			http.StatusBadRequest,
+			validation.ParseFieldErrors(err, dto.UserResponseDto{}),
+			nil,
+			"Bad request",
+		)
 	}
-	c.JSON(200, gin.H{"data": users})
+
+	globalResponse(
+		c,
+		http.StatusOK,
+		nil,
+		users,
+		"Success",
+	)
+
 }
 
 // SaveUser saves the user
 func (u UserController) SaveUser(c *gin.Context) {
-	user := models.User{}
+	user := dto.CreateUserRequest{}
 	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		u.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		globalResponse(
+			c,
+			http.StatusBadRequest,
+			validation.ParseFieldErrors(err, dto.CreateUserRequest{}),
+			nil,
+			"Bad request",
+		)
 		return
 	}
 
 	if err := u.service.WithTrx(trxHandle).CreateUser(user); err != nil {
 		u.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		globalResponse(
+			c,
+			http.StatusBadRequest,
+			validation.ParseFieldErrors(err, dto.CreateUserRequest{}),
+			nil,
+			"Bad request",
+		)
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "user created"})
+	globalResponse(
+		c,
+		http.StatusOK,
+		nil,
+		nil,
+		"User created successfully",
+	)
 }
 
 // UpdateUser updates user
 func (u UserController) UpdateUser(c *gin.Context) {
-	c.JSON(200, gin.H{"data": "user updated"})
+	paramID := c.Param("id")
+	id, err := strconv.Atoi(paramID)
+	if err != nil {
+		u.logger.Error(err)
+		c.Error(err)
+		return
+	}
+
+	user := dto.CreateUserRequest{}
+	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+	if err := c.ShouldBindJSON(&user); err != nil {
+		u.logger.Error(err)
+		globalResponse(
+			c,
+			http.StatusBadRequest,
+			validation.ParseFieldErrors(err, dto.CreateUserRequest{}),
+			nil,
+			"Bad request",
+		)
+		return
+	}
+
+	if err := u.service.WithTrx(trxHandle).UpdateUser(uint(id), user); err != nil {
+		u.logger.Error(err)
+		c.Error(err)
+		return
+	}
+
+	globalResponse(
+		c,
+		http.StatusOK,
+		nil,
+		nil,
+		"User updated successfully",
+	)
 }
 
 // DeleteUser deletes user
@@ -98,20 +180,27 @@ func (u UserController) DeleteUser(c *gin.Context) {
 
 	id, err := strconv.Atoi(paramID)
 	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
+		globalResponse(
+			c,
+			http.StatusBadRequest,
+			validation.ParseFieldErrors(err, dto.CreateUserRequest{}),
+			nil,
+			"Bad request",
+		)
 		return
 	}
 
 	if err := u.service.DeleteUser(uint(id)); err != nil {
 		u.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "user deleted"})
+	globalResponse(
+		c,
+		http.StatusOK,
+		nil,
+		nil,
+		"User deleted successfully",
+	)
 }

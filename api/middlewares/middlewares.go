@@ -1,13 +1,20 @@
 package middlewares
 
-import "go.uber.org/fx"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/fx"
+)
 
 // Module Middleware exported
 var Module = fx.Options(
 	fx.Provide(NewCorsMiddleware),
 	fx.Provide(NewJWTAuthMiddleware),
 	fx.Provide(NewDatabaseTrx),
+	fx.Provide(NewErrorMiddleware),
 	fx.Provide(NewMiddlewares),
+	fx.Provide(NewJWTResetPasswordMiddleware),
 )
 
 // IMiddleware middleware interface
@@ -23,10 +30,16 @@ type Middlewares []IMiddleware
 func NewMiddlewares(
 	corsMiddleware CorsMiddleware,
 	dbTrxMiddleware DatabaseTrx,
+	jwtAuthMiddleware JWTAuthMiddleware,
+	errorMiddlware ErrorMiddleware,
+	jwtResetPasswordMiddleware JWTResetPasswordMiddleware,
 ) Middlewares {
 	return Middlewares{
 		corsMiddleware,
 		dbTrxMiddleware,
+		jwtAuthMiddleware,
+		errorMiddlware,
+		jwtResetPasswordMiddleware,
 	}
 }
 
@@ -35,4 +48,12 @@ func (m Middlewares) Setup() {
 	for _, middleware := range m {
 		middleware.Setup()
 	}
+}
+
+func abortErrorResponse(c *gin.Context, errorMessage string, statusCode int) {
+	c.AbortWithStatusJSON(statusCode, gin.H{
+		"error":   errorMessage,
+		"data":    nil,
+		"message": http.StatusText(statusCode),
+	})
 }

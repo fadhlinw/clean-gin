@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"github.com/dipeshdulal/clean-gin/api/controllers"
-	"github.com/dipeshdulal/clean-gin/api/middlewares"
-	"github.com/dipeshdulal/clean-gin/lib"
+	"github.com/fadhlinw/clean-gin/api/controllers"
+	"github.com/fadhlinw/clean-gin/api/middlewares"
+	"github.com/fadhlinw/clean-gin/lib"
 )
 
 // UserRoutes struct
@@ -12,12 +12,13 @@ type UserRoutes struct {
 	handler        lib.RequestHandler
 	userController controllers.UserController
 	authMiddleware middlewares.JWTAuthMiddleware
+	errorMiddleware middlewares.ErrorMiddleware
 }
 
 // Setup user routes
 func (s UserRoutes) Setup() {
 	s.logger.Info("Setting up routes")
-	api := s.handler.Gin.Group("/api").Use(s.authMiddleware.Handler())
+	api := s.handler.Gin.Group("/api").Use(s.authMiddleware.Handler(), s.errorMiddleware.Handler())
 	{
 		api.GET("/user", s.userController.GetUser)
 		api.GET("/user/:id", s.userController.GetOneUser)
