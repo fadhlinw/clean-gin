@@ -100,11 +100,11 @@ func (s UserService) CreateUser(createUserDto dto.CreateUserRequest) error {
 
 	// sendEmailRequest := dto.SendEmailRequestDto{
 	// 	To:      createUserDto.Email,
-	// 	Subject: "HIJA Tracker - New User Password",
-	// 	Body:    "Your HIJA password is: " + createUserDto.Password,
+	// 	Subject: "Gello",
+	// 	Body:    "Your password is: " + createUserDto.Password,
 	// }
 
-	// s.logger.Info("SEND EMAIL: ", sendEmailRequest)
+	// s.logger.Debug("SEND EMAIL: ", sendEmailRequest)
 
 	// // Send password to user email
 	// err := s.smtpClient.SendEmail(sendEmailRequest)
